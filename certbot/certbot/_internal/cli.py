@@ -35,7 +35,7 @@ from certbot._internal.plugins import disco as plugins_disco
 logger = logging.getLogger(__name__)
 
 # Global, to save us from a lot of argument passing within the scope of this module
-helpful_parser = None  # type: Optional[HelpfulArgumentParser]
+# helpful_parser = None  # type: Optional[HelpfulArgumentParser]
 
 # For help strings, figure out how the user ran us.
 # When invoked from letsencrypt-auto, sys.argv[0] is something like:
@@ -179,7 +179,7 @@ class _Default(object):
         return self.__bool__()
 
 
-def set_by_cli(var):
+def set_by_cli(var, helpful_parser):
     """
     Return True if a particular config variable has been set by the user
     (CLI or config file) including if the user explicitly set it to the
@@ -192,7 +192,7 @@ def set_by_cli(var):
         plugins = plugins_disco.PluginsRegistry.find_all()
         # reconstructed_args == sys.argv[1:], or whatever was passed to main()
         reconstructed_args = helpful_parser.args + [helpful_parser.verb]
-        detector = set_by_cli.detector = prepare_and_parse_args(  # type: ignore
+        detector, helpful_parser = set_by_cli.detector, helpful_parser = prepare_and_parse_args(  # type: ignore
             plugins, reconstructed_args, detect_defaults=True)
         # propagate plugin requests: eg --standalone modifies config.authenticator
         detector.authenticator, detector.installer = (  # type: ignore
@@ -203,7 +203,7 @@ def set_by_cli(var):
         return True
 
     for modifier in VAR_MODIFIERS.get(var, []):
-        if set_by_cli(modifier):
+        if set_by_cli(modifier, helpful_parser):
             logger.debug("Var %s=%s (set by user).",
                 var, VAR_MODIFIERS.get(var, []))
             return True
@@ -216,7 +216,7 @@ def set_by_cli(var):
 set_by_cli.detector = None  # type: ignore
 
 
-def has_default_value(option, value):
+def has_default_value(option, value, helpful_parser):
     """Does option have the default value?
 
     If the default value of option is not known, False is returned.
@@ -234,7 +234,7 @@ def has_default_value(option, value):
     return False
 
 
-def option_was_set(option, value):
+def option_was_set(option, value, helpful_parser):
     """Was option set by the user or does it differ from the default?
 
     :param str option: configuration variable being considered
@@ -244,10 +244,10 @@ def option_was_set(option, value):
     :rtype: bool
 
     """
-    return set_by_cli(option) or not has_default_value(option, value)
+    return set_by_cli(option, helpful_parser) or not has_default_value(option, value, helpful_parser)
 
 
-def argparse_type(variable):
+def argparse_type(variable, helpful_parser):
     """Return our argparse type function for a config variable (default: str)"""
     # pylint: disable=protected-access
     if helpful_parser is not None:
@@ -1243,9 +1243,9 @@ def prepare_and_parse_args(plugins, args, detect_defaults=False):
     _plugins_parsing(helpful, plugins)
 
     if not detect_defaults:
-        global helpful_parser # pylint: disable=global-statement
+        # global helpful_parser # pylint: disable=global-statement
         helpful_parser = helpful
-    return helpful.parse_args()
+    return helpful.parse_args(), helpful_parser
 
 
 def _create_subparsers(helpful):
