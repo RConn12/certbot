@@ -216,6 +216,7 @@ def set_by_cli(var, helpful_parser):
 set_by_cli.detector = None  # type: ignore
 
 
+# TODO: set_by_cli() used to modify the global helpful_parser which may have affected this function
 def has_default_value(option, value, helpful_parser):
     """Does option have the default value?
 
@@ -1242,6 +1243,7 @@ def prepare_and_parse_args(plugins, args, detect_defaults=False):
     # parser (--help should display plugin-specific options last)
     _plugins_parsing(helpful, plugins)
 
+    helpful_parser = None
     if not detect_defaults:
         # global helpful_parser # pylint: disable=global-statement
         helpful_parser = helpful

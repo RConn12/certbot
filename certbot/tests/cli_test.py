@@ -70,7 +70,8 @@ class ParseTest(unittest.TestCase):
     @staticmethod
     def _unmocked_parse(*args, **kwargs):
         """Get result of cli.prepare_and_parse_args."""
-        return cli.prepare_and_parse_args(PLUGINS, *args, **kwargs)
+        namespace = cli.prepare_and_parse_args(PLUGINS, *args, **kwargs)[0]
+        return namespace
 
     @staticmethod
     def parse(*args, **kwargs):
@@ -536,11 +537,13 @@ class SetByCliTest(unittest.TestCase):
 
 
 def _call_set_by_cli(var, args, verb):
-    with mock.patch('certbot._internal.cli.helpful_parser') as mock_parser:
-        with test_util.patch_get_utility():
-            mock_parser.args = args
-            mock_parser.verb = verb
-            return cli.set_by_cli(var)
+    # with mock.patch('certbot._internal.cli.helpful_parser') as mock_parser:
+    # with helpful_parser as mock_parser:
+    # with test_util.patch_get_utility():
+    plugins = disco.PluginsRegistry.find_all()
+    helpful_parser = cli.HelpfulArgumentParser(args, plugins, True)
+    helpful_parser.verb = verb
+    return cli.set_by_cli(var, helpful_parser)
 
 
 if __name__ == '__main__':
