@@ -341,16 +341,18 @@ class ParseTest(unittest.TestCase):
     def test_option_was_set(self):
         key_size_option = 'rsa_key_size'
         key_size_value = cli.flag_default(key_size_option)
-        self.parse('--rsa-key-size {0}'.format(key_size_value).split())
+        rsa_key = '--rsa-key-size {0}'.format(key_size_value).split()
+        helpful_parser = cli.prepare_and_parse_args(PLUGINS, rsa_key)[1]
+        # self.parse('--rsa-key-size {0}'.format(key_size_value).split())
 
-        self.assertTrue(cli.option_was_set(key_size_option, key_size_value))
-        self.assertTrue(cli.option_was_set('no_verify_ssl', True))
+        self.assertTrue(cli.option_was_set(key_size_option, key_size_value, helpful_parser))
+        self.assertTrue(cli.option_was_set('no_verify_ssl', True, helpful_parser))
 
         config_dir_option = 'config_dir'
         self.assertFalse(cli.option_was_set(
-            config_dir_option, cli.flag_default(config_dir_option)))
+            config_dir_option, cli.flag_default(config_dir_option), helpful_parser))
         self.assertFalse(cli.option_was_set(
-            'authenticator', cli.flag_default('authenticator')))
+            'authenticator', cli.flag_default('authenticator'), helpful_parser))
 
     def test_encode_revocation_reason(self):
         for reason, code in constants.REVOCATION_REASONS.items():
@@ -540,8 +542,7 @@ def _call_set_by_cli(var, args, verb):
     # with mock.patch('certbot._internal.cli.helpful_parser') as mock_parser:
     # with helpful_parser as mock_parser:
     # with test_util.patch_get_utility():
-    plugins = disco.PluginsRegistry.find_all()
-    helpful_parser = cli.HelpfulArgumentParser(args, plugins, True)
+    helpful_parser = cli.HelpfulArgumentParser(args, PLUGINS, True)
     helpful_parser.verb = verb
     return cli.set_by_cli(var, helpful_parser)
 
